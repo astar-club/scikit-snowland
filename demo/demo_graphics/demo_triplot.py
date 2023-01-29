@@ -8,6 +8,7 @@ from snowland.plot_helper.plot_helper import plot_arrow, plot_line
 def format_point(p, e):
     return ('%.10f' % p[0], '%.10f' % p[1])
 
+
 #
 # line1 = np.loadtxt("D:/line1.txt", delimiter=',')
 # line2 = np.loadtxt("D:/line2.txt", delimiter=',')
@@ -43,7 +44,7 @@ for tri in triang_sort:
 # for line in lines:
 #     plot_line(*line, 'r-')
 # res = np.vstack((lines[0][0], lines[0][1], np.vstack([line[-1] for line in lines[1:]])))
-eps=10
+eps = 10
 start_map = {format_point(line[0], eps): i for i, line in enumerate(lines)}
 end_map = {format_point(line[1], eps): i for i, line in enumerate(lines)}
 end_map_i = {i: format_point(line[1], eps) for i, line in enumerate(lines)}

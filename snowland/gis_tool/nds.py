@@ -19,6 +19,12 @@ def dms_to_nds(dms: Union[np.ndarray, List, float]):
 
 
 def nds_to_morton(nds_lon, nds_lat):
+    """
+    生成二维莫顿码（Morton code）
+    :param nds_lon: longitude
+    :param nds_lat: latitude
+    :return: Morton code
+    """
     if isinstance(nds_lon, (np.uint, int)) and isinstance(nds_lat, (np.uint, int)):
         mortonCode = 0
         x, y = nds_lon, nds_lat
@@ -108,6 +114,11 @@ def normalize_coord(result):
 
 
 def morton_code_to_coord(morton_code_param):
+    """
+    莫顿码转2个32位编码
+    :param morton_code_param:
+    :return:
+    """
     coord = np.zeros(2, dtype=np.uint32)
     morton_code = morton_code_param
     bit = 1
@@ -131,6 +142,12 @@ def get_left_bottom_of_tile_with_level(tile_id: int, level: int = None):
 
 
 def get_lon_lat_of_tile(tile_id: int, level: int = None):
+    """
+    通过莫顿码找原始经纬度
+    :param tile_id:
+    :param level:
+    :return:
+    """
     if level is None:
         level = get_level_of_tile_id(tile_id)
     coord = get_left_bottom_of_tile_with_level(tile_id, level)
@@ -141,6 +158,11 @@ def get_lon_lat_of_tile(tile_id: int, level: int = None):
 def get_tile_bounding_box(tile_id: int, level=13):
     """
     获得tile所在的矩形框
+    :param tile_id: 莫顿码（瓦片id）
+    :param level: 层级
+    :return:
+    p: n x 2 array 表示左下角的点
+    length: 表示瓦片长度
     """
     if level is None:
         level = get_level_of_tile_id(tile_id)

@@ -1,8 +1,7 @@
 from typing import List
 
 import numpy as np
-from qgis.core import QgsPoint, QgsLineString, QgsFeature, QgsSpatialIndex
-
+from qgis.core import QgsLineString, QgsFeature, QgsSpatialIndex
 from snowland.gis_tool.qgis_tool import QgsGeometry
 
 
@@ -95,7 +94,7 @@ class TrafficIntersection:
         self.nodes = {}
 
     @staticmethod
-    def init_by_features(features: List[QgsFeature], buffer_size=1*D2M):
+    def init_by_features(features: List[QgsFeature], buffer_size=1):
         if not isinstance(features, List):
             features = list(features)
         tile_road_map = TileRoadMap.init_by_features(features)

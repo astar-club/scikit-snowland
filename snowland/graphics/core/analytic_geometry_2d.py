@@ -8,13 +8,12 @@
 # @Software: PyCharm
 
 from abc import ABCMeta
-from typing import List
 from numbers import Number
+from typing import List
 
+import numpy as np
 from astartool.error import ParameterTypeError, ParameterValueError
 from astartool.number import equals_zero
-import numpy as np
-
 from snowland.graphics.core.analytic_geometry_base import Line
 from snowland.graphics.core.computational_geometry_2d import Point2D
 
@@ -43,19 +42,19 @@ RIGHT = 1
 class Line2D(Line):
     def __init__(self, a=None, b=0, c=0, p1: (Point2D, np.ndarray, list) = None, p2: (Point2D, np.ndarray, list) = None,
                  k=None,
-                 *args, **kwargs):
+                 *, dtype=None, **kwargs):
         if a is not None and b is not None and c is not None:
             # ax+by+c=0方式定义的线
             self.a, self.b, self.c = a, b, c
         elif p1 is not None and p2 is not None:
             # 两点式定义的直线
-            p1, p2 = Point2D(p1), Point2D(p2)
+            p1, p2 = Point2D(p1, dtype=dtype), Point2D(p2, dtype=dtype)
             self.a, self.b, self.c = p2.y - p1.y, p1.x - p2.x, p2.x * p1.y - p1.x * p2.y
         elif k is not None:
             if p1 is not None:
                 # 点斜式确定的直线
                 # y-y0 = k(x-x0)
-                p1 = Point2D(p1)
+                p1 = Point2D(p1, dtype=dtype)
                 self.a, self.b, self.c = k, -1, p1.y - k * p1.x
             else:
                 # 斜截式定义的直线
@@ -196,21 +195,34 @@ class Line2D(Line):
         s = "{ax}+{by}+{c}=0".format(ax=ax, by=by, c=self.c)
         return s.replace("+-", "-")
 
+
 class ConicalSection(Line, metaclass=ABCMeta):
     """
     圆锥曲线
     """
-    pass
+    def __init__(self, params, *args, dtype=None, **kwargs):
+        self.params = npa(params, dtype=dtype)
 
 
 class Ellipse(ConicalSection):
     """
     椭圆
     """
+    def __init__(self, params=None, a=None, b=None, p=(0, 0), *args, dtype=None, **kwargs):
+        if params is not None:
+            # Ax2+By2+Cxy+Dx+Ey+F=0
+            super().__init__(params, *args, dtype=dtype, **kwargs)
+        elif a is not None and b is not None:
+            a2 = a * a
+            b2 = b * b
+            p = Point2D(p, dtype=dtype)
+            px2 = p.x * p.x
+            py2 = p.y * p.y
+            super().__init__([b2, a2, 0, -2 * p.x * b2, -2 * p.y * a2, b2 * px2 + a2 * py2 - a2 * b2],
+                             dtype=dtype, **kwargs)
 
-    def __init__(self, params, *args, **kwargs):
-        # AX2+By2+Cxy+Dx+Ey+F=0
-        self.params = params
+        else:
+            raise ParameterValueError("参数错误")
 
     @property
     def a(self):
@@ -238,35 +250,70 @@ class Ellipse(ConicalSection):
 
     @property
     def eccentricity(self):
-        e = (self.a / self.b) ** 0.5
-        if e > 1:
-            return 1 / e
-        return e
+        return self.focal_length / self.major_axis / 2
 
     @property
     def major_axis(self):
+        """
+        半长轴
+        :return:
+        """
         return max(self.a, self.b) ** 0.5
 
     @property
     def minor_axis(self):
+        """
+        半短轴
+        :return:
+        """
         return min(self.a, self.b) ** 0.5
 
     @property
     def focal_length(self):
+        """
+        焦距
+        :return:
+        """
         return 2 * abs(self.a - self.b) ** 0.5
+
+    def get(self, x):
+        # Ax2+By2+Cxy+Dx+Ey+F=0  ==>  by^2+(cx+e)y + ax^2+dx+f = 0
+        a = self.b
+        b = self.c * x + self.e
+        c = self.a * x * x + self.d * x + self.f
+        delta = b * b - 4 * a * c
+        sqrt_delta = delta ** 0.5
+        return (-b + sqrt_delta) / (2 * a), (-b - sqrt_delta) / (2 * a)
+
+    def to_string(self):
+        return f"{self.a}x^2+{self.b}y^2+{self.c}xy+{self.d}x+{self.e}y+{self.f}=0".replace("+-", "-")
+
+    def __str__(self):
+        return self.to_string()
 
 
 class Circle(Ellipse):
-    def __init__(self, param, *args, **kwargs):
-        # x^2+y^2+Dx+Ey+F=0
-        if len(param) == 6:
-            super(Circle, self).__init__(param)
-        elif len(param) == 3:
-            p = np.ones(6)
-            p[3:] = param
-            super(Circle, self).__init__(p)
+    def __init__(self, param=None, p=None, r=None, *args, **kwargs):
+        if param is not None:
+            # x^2+y^2+Dx+Ey+F=0
+            if len(param) == 6:
+                super(Circle, self).__init__(param, *args, **kwargs)
+            elif len(param) == 3:
+                p = np.ones(6)
+                p[2] = 0
+                p[3:] = param
+                super(Circle, self).__init__(p, *args, **kwargs)
+            else:
+                raise ParameterValueError("param参数应为3个或者6个")
+            self.centre = Point2D([-self.d / 2, -self.e / 2])
+            self.radius = (self.centre.x * self.centre.x + self.centre.y * self.centre.y - self.f) ** 0.5
+        elif p is not None and r is not None:
+            params = [1, 1, 0, -2 * p[0], -2 * p[1], p[0] ** 2 + p[1] ** 2 - r * r]
+            super(Circle, self).__init__(params, *args, **kwargs)
+            self.centre = Point2D(p)
+            self.radius = r
         else:
-            raise ParameterValueError("param参数应为3个或者6个")
+            raise ParameterValueError("参数错误")
 
 
 class Hyperbola(ConicalSection):
@@ -274,16 +321,45 @@ class Hyperbola(ConicalSection):
     双曲线
     """
 
-    def __init__(self, params, eps=1e-8, *args, **kwargs):
+    def __init__(self, params=None, a=None, b=None, p=(0, 0), eps=1e-8, axis='x', dtype=None, **kwargs):
         # Ax2+2Bxy+Cy2+2Dx+2Ey+F=0
-        self.params = params
-        if equals_zero(np.linalg.det([[self.a, self.b, self.d],
-                                      [self.b, self.c, self.e],
-                                      [self.d, self.e, self.f]]), eps):
-            raise ParameterValueError("参数矩阵非满秩")
+        if params is not None:
+            super().__init__(params, dtype=dtype, **kwargs)
+            self.axis = axis
+            if equals_zero(np.linalg.det([[self.a, self.b, self.d],
+                                          [self.b, self.c, self.e],
+                                          [self.d, self.e, self.f]]), eps):
+                raise ParameterValueError("参数矩阵非满秩")
 
-        if self.b * self.b - self.a * self.c <= eps:
-            raise ParameterValueError("b^2-ac应该大于0")
+            if self.b * self.b - self.a * self.c <= eps:
+                raise ParameterValueError("b^2-ac应该大于0")
+        elif a is not None and b is not None:
+            a2 = a * a
+            b2 = b * b
+            p = Point2D(p, dtype=dtype)
+            px2 = p.x * p.x
+            py2 = p.y * p.y
+            super().__init__([b2, 0, -a2, -p.x * b2, p.y * a2, b2 * px2 - a2 * py2 - a2 * b2],
+                             dtype=dtype, **kwargs)
+            self.axis = axis
+
+        else:
+            raise ParameterValueError("参数错误")
+
+    @property
+    def focal_length(self):
+        """
+        焦距
+        :return:
+        """
+        return 2 * (abs(self.a) + abs(self.c)) ** 0.5
+
+    @property
+    def eccentricity(self):
+        if self.axis == 'x':
+            return self.focal_length / self.a / 2
+        else:
+            return self.focal_length / self.b / 2
 
     @property
     def a(self):
@@ -309,15 +385,30 @@ class Hyperbola(ConicalSection):
     def f(self):
         return self.params[5]
 
+    def get(self, x):
+        # Ax2+2Bxy+Cy2+2Dx+2Ey+F=0  ==>  cy^2+(2bx+2e)y + ax^2+2dx+f = 0
+        a = self.c
+        b = 2 * self.b * x + 2 * self.e
+        c = self.a * x * x + 2 * self.d * x + self.f
+        delta = b * b - 4 * a * c
+        sqrt_delta = np.sqrt(delta)
+        return (-b + sqrt_delta) / (2 * a), (-b - sqrt_delta) / (2 * a)
+
+    def to_string(self):
+        return f"{self.a}x^2+2*{self.b}xy+{self.c}y2+2*{self.d}x+2*{self.e}y+{self.f}=0".replace("+-", "-")
+
+    def __str__(self):
+        return self.to_string()
+
 
 class Parabola(ConicalSection):
     """
     抛物线
     """
 
-    def __init__(self, params, eps=1e-8):
+    def __init__(self, params, *args, dtype=None, **kwargs):
         # ax2 +2hxy +by2 +2gx +2fy+c =0
-        self.params = params
+        super(Parabola, self).__init__(params, dtype=dtype, *args, **kwargs)
 
     @property
     def a(self):
@@ -342,6 +433,12 @@ class Parabola(ConicalSection):
     @property
     def f(self):
         return self.params[4]
+
+    def to_string(self):
+        return f"{self.a}x^2+2*{self.h}xy+{self.b}y^2+2*{self.g}x+2*{self.f}y+{self.c}=0".replace("+-", "-")
+
+    def __str__(self):
+        return self.to_string()
 
 
 class Polynomial(Line):

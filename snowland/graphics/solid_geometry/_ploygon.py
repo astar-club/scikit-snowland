@@ -12,7 +12,6 @@ from typing import List, Union
 
 import numpy as np
 from scipy.spatial.ckdtree import cKDTree
-
 from snowland.graphics.core.computational_geometry_2d import Point2D, Polygon, PolygonWithoutHoles, ConvexPolygon
 from snowland.graphics.utils import get_intersect_by_two_point
 from snowland.graphics.utils import get_rotate_angle_degree, get_angle_rad
@@ -118,7 +117,7 @@ def __in_polygon(p: Point2D, polygon: Polygon):
         for hole in polygon.holes:
             polygon_temp = PolygonWithoutHoles(hole)
             for i, point in enumerate(polygon_temp.p[:, :]):  # 注意，这个i取0的时候，i-1值是-1，所以这个是循环到所有的边
-                if (point[1] <= p[1] < polygon_temp.p[i - 1, 1] or polygon_temp.p[i - 1, 1] <= p[1] < point[1]):
+                if point[1] <= p[1] < polygon_temp.p[i - 1, 1] or polygon_temp.p[i - 1, 1] <= p[1] < point[1]:
                     a, b, c = point[1] - polygon_temp.p[i - 1, 1], polygon_temp.p[i - 1, 0] - point[0], point[0] * \
                               polygon_temp.p[
                                   i - 1, 1] - point[1] * polygon_temp.p[i - 1, 0]

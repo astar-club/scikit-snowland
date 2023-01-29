@@ -9,9 +9,9 @@
 from typing import List
 
 import numpy as np
-from scipy.spatial.distance import cdist, pdist, euclidean
-from astartool.number import equals_zero, equals_zero_all
 from astartool.data_structure import LinkedList
+from astartool.number import equals_zero_all
+from scipy.spatial.distance import cdist, euclidean
 
 npa = np.array
 npl = np.linalg

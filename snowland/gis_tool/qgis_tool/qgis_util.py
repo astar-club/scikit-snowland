@@ -93,11 +93,6 @@ def points(geometry: QgsGeometry):
     return npa([(v.x(), v.y(), v.z()) for v in vertices])
 
 
-def pointsZM(geometry: QgsGeometry):
-    vertices = geometry.vertices()
-    return npa([(v.x(), v.y(), v.z(), v.m()) for v in vertices])
-
-
 def pointsXY(geometry: QgsGeometry):
     vertices = geometry.vertices()
     return npa([(v.x(), v.y()) for v in vertices])

@@ -15,7 +15,11 @@
 
 from snowland.image.api import *
 from skimage.io import imread, imshow, imsave
-from skimage.color import rgb2grey
+try:
+    from skimage.color import rgb2grey
+except:
+    from skimage.color import rgb2gray as rgb2grey
+
 from skimage.data import chelsea
 from matplotlib import pylab as plt
 

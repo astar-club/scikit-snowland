@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
+from typing import Iterable
+
 import numpy as np
 from pyproj import Transformer
-from typing import Iterable
 
 npa = np.array
 

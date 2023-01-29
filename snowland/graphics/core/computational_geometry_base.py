@@ -38,22 +38,26 @@ __all__ = [
 
 
 class Vector(object):
-    def __init__(self, x=None, dim=None, start=None, end=None):
+    def __init__(self, x=None, dim=None, start=None, end=None, *, dtype=None):
         if isinstance(x, Vector):
             x = x.x
         elif dim is not None:
-            x = np.zeros(dim)
+            x = np.zeros(dim, dtype=dtype)
         elif x is not None:
             # TODO: 判断x是一维的
-            x = npa(x)
+            x = npa(x, dtype=dtype)
         elif start is not None and end is not None:
-            x = Point(end) - Point(start)
+            x = Point(end, dtype=dtype) - Point(start, dtype=dtype)
 
         self.x = x
 
     def __mul__(self, other):
         v2 = Vector(other)
         return v2.x * self.x
+
+    def __matmul__(self, other):
+        v2 = Vector(other)
+        return self.x @ v2.x
 
     def __add__(self, other):
         v2 = Vector(other)
@@ -64,8 +68,7 @@ class Vector(object):
         return Vector(self.x - v2.x)
 
     def __str__(self):
-        itor = [str(_) for _ in self.x]
-        return "Vector <" + ', '.join(itor) + ">"
+        return "Vector <" + ', '.join(map(str, self.x)) + ">"
 
     def length(self):
         """
@@ -181,13 +184,13 @@ class Vector3(Vector):
 
 
 class UnitVector(Vector):
-    def __init__(self, x=None, dim=None, start=None, end=None, eps=1e-8):
-        super(UnitVector, self).__init__(x, dim, start, end)
+    def __init__(self, x=None, dim=None, start=None, end=None, eps=1e-8, *, dtype=None):
+        super(UnitVector, self).__init__(x, dim, start, end, dtype=dtype)
         assert self.is_unit_vector()
 
 
 class UnitVector3(Vector3):
-    def __init__(self, x=None, dim=None, start=None, end=None, eps=1e-8):
+    def __init__(self, x=None, dim=None, start=None, end=None, eps=1e-8, dtype=None):
         super(UnitVector3, self).__init__(x, dim, start, end)
         assert self.is_unit_vector()
 
@@ -202,11 +205,11 @@ class Graphic(metaclass=ABCMeta):
 
 
 class Point(Graphic):
-    def __init__(self, p):
+    def __init__(self, p, *, dtype=None):
         if isinstance(p, Point):
             self.p = p.p
         else:
-            self.p = npa(p)
+            self.p = npa(p, dtype=dtype)
 
     def __setitem__(self, instance, value):
         if isinstance(isinstance(instance, Number)):
@@ -237,16 +240,15 @@ class Point(Graphic):
             raise ValueError('Error in Point')
 
     def __str__(self):
-        itor = [str(_) for _ in self.p]
-        return "Point <" + ', '.join(itor) + ">"
+        return "Point <" + ', '.join(map(str, self.p)) + ">"
 
 
 class MultiPoint(Graphic):
-    def __init__(self, p):
+    def __init__(self, p, *, dtype=None):
         if isinstance(p, MultiPoint):
             self.p = p
         else:
-            self.p = npa(p)
+            self.p = npa(p, dtype)
 
     def __str__(self):
         itor = [str(_) for _ in self.p]
@@ -263,7 +265,7 @@ class Line(Graphic, metaclass=ABCMeta):
 
 
 class LineString(Graphic):
-    def __init__(self, X=None):
+    def __init__(self, X=None, *, dtype=None):
         if isinstance(X, LineString):
             self.X = X.X
         else:
@@ -271,7 +273,7 @@ class LineString(Graphic):
                 X = []
             elif isinstance(X[0], Point):
                 X = [each.p for each in X]
-            self.X = npa(X)
+            self.X = npa(X, dtype=None)
 
     def length(self, metric='euclidean', *args, **kwargs):
         m, n = self.X.shape
@@ -287,7 +289,7 @@ class LineString(Graphic):
 
 
 class MultiLineString(Graphic):
-    def __init__(self, X=None):
+    def __init__(self, X=None,  *, dtype=None):
         if isinstance(X, MultiLineString):
             self.X = X.X
         else:
@@ -295,7 +297,7 @@ class MultiLineString(Graphic):
                 X = []
             elif isinstance(X[0], Point):
                 X = [each.p for each in X]
-            self.X = npa(X)
+            self.X = npa(X, dtype)
 
 
 class Shape(Graphic):

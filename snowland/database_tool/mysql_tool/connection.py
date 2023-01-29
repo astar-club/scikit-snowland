@@ -1,6 +1,6 @@
 import configparser
-import pymysql
 
+import pymysql
 
 cp = configparser.ConfigParser()
 

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-from snowland.gis_tool import ELLIPSOID
-from snowland.graphics.utils import simple_line, get_rotate_angle_rad, rotate_geometry
-from snowland.gis_tool.qgis_tool.distance_area import DistanceArea
 import numpy as np
+from snowland.gis_tool import ELLIPSOID
+from snowland.gis_tool.qgis_tool.distance_area import DistanceArea
+from snowland.graphics.utils import get_rotate_angle_rad, rotate_geometry
 
 npa = np.array
 npl = np.linalg

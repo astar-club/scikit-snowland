@@ -10,6 +10,7 @@
 from abc import abstractmethod
 
 from astartool.number import equals_zero_all
+from astartool.error import ParameterValueError
 from scipy.spatial.distance import pdist
 import numpy as np
 
@@ -163,18 +164,16 @@ class ConvexPolygon3D(PolygonWithoutHoles3D):
         points = self.p
         area = 0
         if len(points) < 3:
-            raise Exception("error")
+            raise ParameterValueError("length of points must ge than 3")
 
         for i in range(0, len(points) - 1):
             p1 = points[i]
             p2 = points[i + 1]
 
             triArea = (p1[0] * p2[1] - p2[0] * p1[1]) / 2
-            # print(triArea)
             area += triArea
 
         fn = (points[-1][0] * points[0][1] - points[0][0] * points[-1][1]) / 2
-        # print(fn)
         return abs(area + fn)
 
 

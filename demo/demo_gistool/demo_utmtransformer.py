@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 
-from snowland.gis_tool.transformer import utm_transformer, gps_transformer
+from snowland.gis_tool.transformer import utm_transformer, latlon_transformer
 import random
 from astartool.project import time_clock
 

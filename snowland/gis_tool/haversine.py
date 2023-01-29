@@ -13,7 +13,6 @@ __auth__ = 'A.Star'
 from typing import Tuple, List
 
 import numpy as np
-
 from snowland.gis_tool import EARTH_RADIUS
 
 npa = np.array

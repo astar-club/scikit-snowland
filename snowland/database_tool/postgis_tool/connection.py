@@ -1,6 +1,6 @@
 import configparser
-import psycopg2
 
+import psycopg2
 
 cp = configparser.ConfigParser()
 

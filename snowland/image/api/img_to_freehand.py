@@ -10,7 +10,10 @@
 # 代码修改自 https://github.com/Leungtamir/Image-Freehand/blob/master/image.py
 
 import numpy as np
-from skimage.color import rgb2grey
+try:
+    from skimage.color import rgb2grey
+except:
+    from skimage.color import rgb2gray as rgb2grey
 
 
 def freehand(img, depth=10., el=np.pi / 2.2, az=np.pi / 4):

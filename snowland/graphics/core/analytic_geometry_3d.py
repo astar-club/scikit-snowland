@@ -8,9 +8,8 @@
 # @Software: PyCharm
 
 
-from astartool.error import ParameterValueError, ParameterTypeError
 import numpy as np
-
+from astartool.error import ParameterValueError, ParameterTypeError
 from snowland.graphics.core.analytic_geometry_base import Line, Surface
 from snowland.graphics.core.computational_geometry_3d import Point3D
 from snowland.graphics.core.computational_geometry_base import Vector3
@@ -25,14 +24,14 @@ __all__ = [
 
 class Line3D(Line):
     def __init__(self, x0=0, y0=0, z0=0, p: Point3D = None, a=None, b=None, c=None, p1: Point3D = None,
-                 p2: Point3D = None, plane1=None, plane2=None, *args, **kwargs):
+                 p2: Point3D = None, plane1=None, plane2=None, *, dtype=None, **kwargs):
         if a is not None and b is not None and c is not None:
             # (x-x0)/a = (y-y0)/b = (z-z0)/c
             self.a, self.b, self.c = a, b, c
             if p is None:
                 # TODO: 判断x0, y0, z0是不是为空
                 p = x0, y0, z0
-            self.p = Point3D(p)
+            self.p = Point3D(p, dtype=dtype)
         elif p1 is not None and p2 is not None:
             # 两点式定义的直线
             if isinstance(p1, Point3D) or isinstance(p2, Point3D):
@@ -41,7 +40,7 @@ class Line3D(Line):
             if p is None:
                 # TODO: 判断x0, y0, z0是不是为空
                 p = x0, y0, z0
-            self.p = Point3D(p)
+            self.p = Point3D(p, dtype=dtype)
         else:
 
             if isinstance(plane1, Plane3D) and isinstance(plane2, Plane3D):
@@ -52,7 +51,7 @@ class Line3D(Line):
                 self.a, self.b, self.c = npl.det([[b1, c1], [b2, c2]]), npl.det([[a1, c1], [a2, c2]]), npl.det(
                     [[a1, b1], [a2, b2]])
                 self.p = Point3D((b1 * d2 - b2 * d1) / (a1 * b2 - a2 * b1), (a1 * d2 - a2 * d1) / (a2 * b1 - a1 * b2),
-                                 0)
+                                 0, dtype=dtype)
 
     def feature_vector(self):
         """

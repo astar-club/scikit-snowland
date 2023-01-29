@@ -9,10 +9,10 @@
 
 from typing import Iterable
 
+import numpy as np
 from astartool.error import ParameterError
 from scipy.spatial.distance import pdist, cdist, euclidean
-import numpy as np
-from snowland.graphics.core.computational_geometry_base import Point, LineString, Shape, MultiPoint, Line
+from snowland.graphics.core.computational_geometry_base import Point, LineString, Shape, MultiPoint, MultiLineString
 from snowland.graphics.utils import get_angle_rad, get_intersect_by_two_point, get_lines, get_arc
 
 npa = np.array
@@ -37,11 +37,11 @@ __all__ = [
 
 
 class Point2D(Point):
-    def __init__(self, p=None, x=None, y=None):
+    def __init__(self, p=None, x=None, y=None, *, dtype=None):
         if x is not None and y is not None:
             p = (x, y)
         assert p is not None
-        super(Point2D, self).__init__(p)
+        super(Point2D, self).__init__(p, dtype=dtype)
 
     @property
     def x(self):
@@ -61,18 +61,18 @@ class Point2D(Point):
 
 
 class MultiPoint2D(MultiPoint):
-    def __init__(self, points):
-        super().__init__(points)
+    def __init__(self, points, dtype=None):
+        super().__init__(points, dtype=dtype)
         assert self.p.shape[1] == 2
 
 
 class MultiPolygon2D(Shape):
 
-    def __init__(self, polygons):
+    def __init__(self, polygons, *, dtype=None):
         if isinstance(polygons, MultiPolygon2D):
             self.polygons = polygons.polygons
         elif isinstance(polygons, Iterable):
-            self.polygons = [Polygon(p) for p in polygons]
+            self.polygons = [Polygon(p, dtype=dtype) for p in polygons]
 
     def area(self):
         return sum(p.area() for p in self.polygons)
@@ -82,8 +82,8 @@ class MultiPolygon2D(Shape):
 
 
 class LineString2D(LineString):
-    def __init__(self, X=None):
-        super(LineString2D, self).__init__(X=X)
+    def __init__(self, X=None, *, dtype=None):
+        super(LineString2D, self).__init__(X=X, dtype=dtype)
         assert self.X.shape[1] == 2
 
     def length(self, metric=euclidean, *args, **kwargs):
@@ -125,7 +125,7 @@ class LineString2D(LineString):
 
 
 class LineSegment2D(LineString2D):
-    def __init__(self, X=None, p1=None, p2=None):
+    def __init__(self, X=None, p1=None, p2=None, *, dtype=None):
         if p1 is not None and p2 is not None:
             if isinstance(p1, Point):
                 p1 = p1[:2]
@@ -133,7 +133,7 @@ class LineSegment2D(LineString2D):
                 p2 = p2[:2]
             X = np.vstack((p1, p2))
         assert X is not None
-        super(LineSegment2D, self).__init__(X)
+        super(LineSegment2D, self).__init__(X, dtype=dtype)
 
     def intersection(self, other):
         if isinstance(other, LineSegment2D):
@@ -147,8 +147,8 @@ class LineSegment2D(LineString2D):
 
 
 class Polygon(Shape):
-    def __init__(self, p=None, holes=None):
-        self.p = np.zeros((0, 2))
+    def __init__(self, p=None, holes=None,  *, dtype=None):
+        self.p = np.zeros((0, 2), dtype)
         if isinstance(p, Polygon):
             self.p = p.p
         elif isinstance(p, (list, np.ndarray)):
@@ -203,8 +203,8 @@ class Polygon(Shape):
 
 
 class PolygonWithoutHoles(Polygon):
-    def __init__(self, p):
-        super(PolygonWithoutHoles, self).__init__(p, holes=None)
+    def __init__(self, p,  *, dtype=None):
+        super(PolygonWithoutHoles, self).__init__(p, holes=None, dtype=dtype)
 
     def area(self):
         """
@@ -238,14 +238,14 @@ class Triangle(ConvexPolygon):
     """
     三角形
     """
-    def __init__(self, p):
-        super().__init__(p)
+    def __init__(self, p,  *, dtype=None):
+        super().__init__(p, dtype=dtype)
         assert len(self.p) == 3
 
 
 class Rectangle(ConvexPolygon):
     def __init__(self, p, *args, **kwargs):
-        super().__init__(p)
+        super().__init__(p, *args, **kwargs)
         assert len(self.p) == 4
         vectors = self.p[1:] - self.p[:-1]
         for vi, vj in zip(vectors[:-1], vectors[1:]):
@@ -254,7 +254,7 @@ class Rectangle(ConvexPolygon):
 
 class Diamond(ConvexPolygon):
     def __init__(self, p, *args, **kwargs):
-        super(PolygonWithoutHoles, self).__init__(p, holes=None)
+        super(PolygonWithoutHoles, self).__init__(p, holes=None, *args, **kwargs)
         assert len(self.p) == 4
         m, n = self.p.shape
         dist = [pdist(self.p[ind:ind + 2, :]) for ind in range(m - 1)]
@@ -272,11 +272,11 @@ class Square(Rectangle, Diamond):
 
 
 class Ellipse(Shape):
-    def __init__(self, p1, p2, a=0, b=0):
+    def __init__(self, p1, p2, a=0, b=0, *, dtype=None):
         """
         焦点1, 焦点2, 长轴， 短轴
         """
-        self.p1, self.p2 = Point2D(p1), Point2D(p2)
+        self.p1, self.p2 = Point2D(p1, dtype=dtype), Point2D(p2, dtype=dtype)
         self.a = a
         self.b = b
 
@@ -299,8 +299,8 @@ class Ellipse(Shape):
 
 
 class Circle(Ellipse):
-    def __init__(self, centre, r=0):
-        super(Circle, self).__init__(centre, centre, r, r)
+    def __init__(self, centre, r=0, *, dtype=None):
+        super(Circle, self).__init__(centre, centre, r, r, dtype=dtype)
 
     @property
     def centre(self):
@@ -315,9 +315,9 @@ class Circle(Ellipse):
         self.a = self.b = radius
 
 
-class Arc2D(Line):
-    def __init__(self, centre, r, theta_start=-np.pi, theta_end=np.pi, direction=1):
-        super().__init__()
+class Arc2D(LineString):
+    def __init__(self, centre, r, theta_start=-np.pi, theta_end=np.pi, direction=1, *, dtype=None):
+        super().__init__(dtype=dtype)
         self.centre = centre
         self.r = r
         self.theta_start = theta_start
